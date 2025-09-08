@@ -14,7 +14,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 import data from "./data.json"
 
 export default async function Page() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

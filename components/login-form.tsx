@@ -33,7 +33,7 @@ export function LoginForm({
       if (!email || !password) {
         throw new Error("Podaj email i hasło")
       }
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -41,8 +41,8 @@ export function LoginForm({
 
       router.push("/dashboard")
       router.refresh()
-    } catch (e: any) {
-      setError(e.message ?? "Wystąpił błąd logowania")
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Wystąpił błąd logowania")
     } finally {
       setLoading(false)
     }

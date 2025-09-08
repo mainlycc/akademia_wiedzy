@@ -53,8 +53,8 @@ export function RegisterForm({
           setSuccess("Sprawdź swoją skrzynkę email i kliknij link potwierdzający, aby dokończyć rejestrację.")
         }
       }
-    } catch (e: any) {
-      setError(e.message ?? "Wystąpił błąd rejestracji")
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Wystąpił błąd rejestracji")
     } finally {
       setLoading(false)
     }

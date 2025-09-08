@@ -32,6 +32,13 @@ export default async function Page() {
     .maybeSingle()
   role = profile?.role ?? null
 
+  // Przygotuj dane użytkownika dla sidebar
+  const userData = {
+    name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Użytkownik',
+    email: user.email || '',
+    avatar: user.user_metadata?.avatar_url || '/avatars/default.jpg'
+  }
+
   return (
     <SidebarProvider
       style={
@@ -41,7 +48,7 @@ export default async function Page() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" user={userData} />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">

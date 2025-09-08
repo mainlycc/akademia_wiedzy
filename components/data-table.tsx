@@ -108,12 +108,12 @@ import {
 
 export const schema = z.object({
   id: z.number(),
-  header: z.string(),
-  type: z.string(),
+  imieNazwisko: z.string(),
+  przedmiot: z.string(),
+  poziom: z.string(),
   status: z.string(),
-  target: z.string(),
-  limit: z.string(),
-  reviewer: z.string(),
+  liczbaGodzin: z.number(),
+  korepetytor: z.string(),
 })
 
 // Create a separate component for the drag handle
@@ -169,20 +169,31 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "header",
-    header: "Header",
+    accessorKey: "imieNazwisko",
+    header: "Imię i Nazwisko",
     cell: ({ row }) => {
       return <TableCellViewer item={row.original} />
     },
     enableHiding: false,
   },
   {
-    accessorKey: "type",
-    header: "Section Type",
+    accessorKey: "przedmiot",
+    header: "Przedmiot",
     cell: ({ row }) => (
       <div className="w-32">
         <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.type}
+          {row.original.przedmiot}
+        </Badge>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "poziom",
+    header: "Poziom",
+    cell: ({ row }) => (
+      <div className="w-24">
+        <Badge variant="secondary" className="px-1.5">
+          {row.original.poziom}
         </Badge>
       </div>
     ),
@@ -192,93 +203,75 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     header: "Status",
     cell: ({ row }) => (
       <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.status === "Done" ? (
+        {row.original.status === "Zakończone" ? (
           <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-        ) : (
+        ) : row.original.status === "W trakcie" ? (
           <IconLoader />
-        )}
+        ) : null}
         {row.original.status}
       </Badge>
     ),
   },
   {
-    accessorKey: "target",
-    header: () => <div className="w-full text-right">Target</div>,
+    accessorKey: "liczbaGodzin",
+    header: () => <div className="w-full text-right">Liczba godzin</div>,
     cell: ({ row }) => (
       <form
         onSubmit={(e) => {
           e.preventDefault()
           toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
+            loading: `Zapisywanie ${row.original.imieNazwisko}`,
+            success: "Zapisano",
+            error: "Błąd",
           })
         }}
       >
-        <Label htmlFor={`${row.original.id}-target`} className="sr-only">
-          Target
+        <Label htmlFor={`${row.original.id}-godziny`} className="sr-only">
+          Liczba godzin
         </Label>
         <Input
           className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-          defaultValue={row.original.target}
-          id={`${row.original.id}-target`}
+          defaultValue={row.original.liczbaGodzin}
+          id={`${row.original.id}-godziny`}
+          type="number"
         />
       </form>
     ),
   },
   {
-    accessorKey: "limit",
-    header: () => <div className="w-full text-right">Limit</div>,
-    cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
-          })
-        }}
-      >
-        <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
-          Limit
-        </Label>
-        <Input
-          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-          defaultValue={row.original.limit}
-          id={`${row.original.id}-limit`}
-        />
-      </form>
-    ),
-  },
-  {
-    accessorKey: "reviewer",
-    header: "Reviewer",
+    accessorKey: "korepetytor",
+    header: "Korepetytor",
     cell: ({ row }) => {
-      const isAssigned = row.original.reviewer !== "Assign reviewer"
+      const isAssigned = row.original.korepetytor !== "Przypisz korepetytora"
 
       if (isAssigned) {
-        return row.original.reviewer
+        return (
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-green-500"></div>
+            {row.original.korepetytor}
+          </div>
+        )
       }
 
       return (
         <>
-          <Label htmlFor={`${row.original.id}-reviewer`} className="sr-only">
-            Reviewer
+          <Label htmlFor={`${row.original.id}-korepetytor`} className="sr-only">
+            Korepetytor
           </Label>
           <Select>
             <SelectTrigger
-              className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
+              className="w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
               size="sm"
-              id={`${row.original.id}-reviewer`}
+              id={`${row.original.id}-korepetytor`}
             >
-              <SelectValue placeholder="Assign reviewer" />
+              <SelectValue placeholder="Przypisz korepetytora" />
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-              <SelectItem value="Jamik Tashpulatov">
-                Jamik Tashpulatov
-              </SelectItem>
+              <SelectItem value="Anna Kowalska">Anna Kowalska</SelectItem>
+              <SelectItem value="Piotr Nowak">Piotr Nowak</SelectItem>
+              <SelectItem value="Maria Wiśniewska">Maria Wiśniewska</SelectItem>
+              <SelectItem value="Tomasz Kaczmarek">Tomasz Kaczmarek</SelectItem>
+              <SelectItem value="Katarzyna Zielińska">Katarzyna Zielińska</SelectItem>
             </SelectContent>
           </Select>
         </>
@@ -296,15 +289,15 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
             size="icon"
           >
             <IconDotsVertical />
-            <span className="sr-only">Open menu</span>
+            <span className="sr-only">Otwórz menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Make a copy</DropdownMenuItem>
-          <DropdownMenuItem>Favorite</DropdownMenuItem>
+          <DropdownMenuItem>Edytuj</DropdownMenuItem>
+          <DropdownMenuItem>Skopiuj</DropdownMenuItem>
+          <DropdownMenuItem>Oznacz jako ulubione</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+          <DropdownMenuItem variant="destructive">Usuń</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
@@ -418,30 +411,30 @@ export function DataTable({
           >
             <SelectValue placeholder="Select a view" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="outline">Outline</SelectItem>
-            <SelectItem value="past-performance">Past Performance</SelectItem>
-            <SelectItem value="key-personnel">Key Personnel</SelectItem>
-            <SelectItem value="focus-documents">Focus Documents</SelectItem>
-          </SelectContent>
+            <SelectContent>
+              <SelectItem value="outline">Lista korepetycji</SelectItem>
+              <SelectItem value="past-performance">Historia</SelectItem>
+              <SelectItem value="key-personnel">Korepetytorzy</SelectItem>
+              <SelectItem value="focus-documents">Dokumenty</SelectItem>
+            </SelectContent>
         </Select>
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="outline">Outline</TabsTrigger>
+          <TabsTrigger value="outline">Lista korepetycji</TabsTrigger>
           <TabsTrigger value="past-performance">
-            Past Performance <Badge variant="secondary">3</Badge>
+            Historia <Badge variant="secondary">12</Badge>
           </TabsTrigger>
           <TabsTrigger value="key-personnel">
-            Key Personnel <Badge variant="secondary">2</Badge>
+            Korepetytorzy <Badge variant="secondary">5</Badge>
           </TabsTrigger>
-          <TabsTrigger value="focus-documents">Focus Documents</TabsTrigger>
+          <TabsTrigger value="focus-documents">Dokumenty</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <IconLayoutColumns />
-                <span className="hidden lg:inline">Customize Columns</span>
-                <span className="lg:hidden">Columns</span>
+                <span className="hidden lg:inline">Dostosuj kolumny</span>
+                <span className="lg:hidden">Kolumny</span>
                 <IconChevronDown />
               </Button>
             </DropdownMenuTrigger>
@@ -471,7 +464,7 @@ export function DataTable({
           </DropdownMenu>
           <Button variant="outline" size="sm">
             <IconPlus />
-            <span className="hidden lg:inline">Add Section</span>
+            <span className="hidden lg:inline">Dodaj korepetycję</span>
           </Button>
         </div>
       </div>
@@ -531,14 +524,14 @@ export function DataTable({
           </DndContext>
         </div>
         <div className="flex items-center justify-between px-4">
-          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
-          </div>
+            <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+              {table.getFilteredSelectedRowModel().rows.length} z{" "}
+              {table.getFilteredRowModel().rows.length} wybranych korepetycji.
+            </div>
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
+                Wierszy na stronę
               </Label>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
@@ -561,7 +554,7 @@ export function DataTable({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              Strona {table.getState().pagination.pageIndex + 1} z{" "}
               {table.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
@@ -654,14 +647,14 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
         <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.header}
+          {item.imieNazwisko}
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="gap-1">
-          <DrawerTitle>{item.header}</DrawerTitle>
+          <DrawerTitle>{item.imieNazwisko}</DrawerTitle>
           <DrawerDescription>
-            Showing total visitors for the last 6 months
+            Szczegóły korepetycji - {item.przedmiot} ({item.poziom})
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
@@ -724,81 +717,87 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
           )}
           <form className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
-              <Label htmlFor="header">Header</Label>
-              <Input id="header" defaultValue={item.header} />
+              <Label htmlFor="imieNazwisko">Imię i Nazwisko</Label>
+              <Input id="imieNazwisko" defaultValue={item.imieNazwisko} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="type">Type</Label>
-                <Select defaultValue={item.type}>
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select a type" />
+                <Label htmlFor="przedmiot">Przedmiot</Label>
+                <Select defaultValue={item.przedmiot}>
+                  <SelectTrigger id="przedmiot" className="w-full">
+                    <SelectValue placeholder="Wybierz przedmiot" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Table of Contents">
-                      Table of Contents
-                    </SelectItem>
-                    <SelectItem value="Executive Summary">
-                      Executive Summary
-                    </SelectItem>
-                    <SelectItem value="Technical Approach">
-                      Technical Approach
-                    </SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Capabilities">Capabilities</SelectItem>
-                    <SelectItem value="Focus Documents">
-                      Focus Documents
-                    </SelectItem>
-                    <SelectItem value="Narrative">Narrative</SelectItem>
-                    <SelectItem value="Cover Page">Cover Page</SelectItem>
+                    <SelectItem value="Matematyka">Matematyka</SelectItem>
+                    <SelectItem value="Fizyka">Fizyka</SelectItem>
+                    <SelectItem value="Chemia">Chemia</SelectItem>
+                    <SelectItem value="Biologia">Biologia</SelectItem>
+                    <SelectItem value="Język polski">Język polski</SelectItem>
+                    <SelectItem value="Język angielski">Język angielski</SelectItem>
+                    <SelectItem value="Historia">Historia</SelectItem>
+                    <SelectItem value="Geografia">Geografia</SelectItem>
+                    <SelectItem value="Informatyka">Informatyka</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="poziom">Poziom</Label>
+                <Select defaultValue={item.poziom}>
+                  <SelectTrigger id="poziom" className="w-full">
+                    <SelectValue placeholder="Wybierz poziom" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Szkoła podstawowa">Szkoła podstawowa</SelectItem>
+                    <SelectItem value="Gimnazjum">Gimnazjum</SelectItem>
+                    <SelectItem value="Liceum">Liceum</SelectItem>
+                    <SelectItem value="Studia">Studia</SelectItem>
+                    <SelectItem value="Matura">Matura</SelectItem>
+                    <SelectItem value="Egzamin ósmoklasisty">Egzamin ósmoklasisty</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
                 <Label htmlFor="status">Status</Label>
                 <Select defaultValue={item.status}>
                   <SelectTrigger id="status" className="w-full">
-                    <SelectValue placeholder="Select a status" />
+                    <SelectValue placeholder="Wybierz status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Done">Done</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Not Started">Not Started</SelectItem>
+                    <SelectItem value="Zakończone">Zakończone</SelectItem>
+                    <SelectItem value="W trakcie">W trakcie</SelectItem>
+                    <SelectItem value="Zaplanowane">Zaplanowane</SelectItem>
+                    <SelectItem value="Anulowane">Anulowane</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="target">Target</Label>
-                <Input id="target" defaultValue={item.target} />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="limit">Limit</Label>
-                <Input id="limit" defaultValue={item.limit} />
+                <Label htmlFor="liczbaGodzin">Liczba godzin</Label>
+                <Input id="liczbaGodzin" defaultValue={item.liczbaGodzin} type="number" />
               </div>
             </div>
             <div className="flex flex-col gap-3">
-              <Label htmlFor="reviewer">Reviewer</Label>
-              <Select defaultValue={item.reviewer}>
-                <SelectTrigger id="reviewer" className="w-full">
-                  <SelectValue placeholder="Select a reviewer" />
+              <Label htmlFor="korepetytor">Korepetytor</Label>
+              <Select defaultValue={item.korepetytor}>
+                <SelectTrigger id="korepetytor" className="w-full">
+                  <SelectValue placeholder="Wybierz korepetytora" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-                  <SelectItem value="Jamik Tashpulatov">
-                    Jamik Tashpulatov
-                  </SelectItem>
-                  <SelectItem value="Emily Whalen">Emily Whalen</SelectItem>
+                  <SelectItem value="Anna Kowalska">Anna Kowalska</SelectItem>
+                  <SelectItem value="Piotr Nowak">Piotr Nowak</SelectItem>
+                  <SelectItem value="Maria Wiśniewska">Maria Wiśniewska</SelectItem>
+                  <SelectItem value="Tomasz Kaczmarek">Tomasz Kaczmarek</SelectItem>
+                  <SelectItem value="Katarzyna Zielińska">Katarzyna Zielińska</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </form>
         </div>
         <DrawerFooter>
-          <Button>Submit</Button>
+          <Button>Zapisz</Button>
           <DrawerClose asChild>
-            <Button variant="outline">Done</Button>
+            <Button variant="outline">Gotowe</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

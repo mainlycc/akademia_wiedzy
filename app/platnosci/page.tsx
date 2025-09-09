@@ -62,7 +62,10 @@ export default async function PlatnosciPage() {
                 <p className="text-muted-foreground">Przeglądaj i zarządzaj płatnościami uczniów</p>
               </div>
               <div className="px-4 lg:px-6">
-                <PaymentManagement data={data} />
+                <PaymentManagement data={data.map(item => ({
+                  ...item,
+                  name: item.imieNazwisko
+                }))} />
               </div>
             </div>
           </div>

@@ -1,14 +1,12 @@
 "use client"
 
 import * as React from "react"
+import { usePathname } from "next/navigation"
 import {
   IconCalendar,
   IconCreditCard,
   IconDashboard,
-  IconHelp,
   IconInnerShadowTop,
-  IconSearch,
-  IconSettings,
   IconUsers,
 } from "@tabler/icons-react"
 
@@ -25,52 +23,41 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
+const getNavData = (pathname: string) => ({
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
+      isActive: pathname === "/dashboard",
     },
     {
       title: "Uczniowie",
-      url: "#",
+      url: "/uczniowie",
       icon: IconUsers,
+      isActive: pathname.startsWith("/uczniowie"),
     },
     {
       title: "Grafik",
-      url: "#",
+      url: "/grafik",
       icon: IconCalendar,
+      isActive: pathname.startsWith("/grafik"),
     },
     {
       title: "Rezerwacje",
-      url: "#",
+      url: "/rezerwacje",
       icon: IconCalendar,
+      isActive: pathname.startsWith("/rezerwacje"),
     },
     {
       title: "Płatności",
-      url: "#",
+      url: "/platnosci",
       icon: IconCreditCard,
+      isActive: pathname.startsWith("/platnosci"),
     },
   ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-}
+  navSecondary: [],
+})
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: {
@@ -81,6 +68,9 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
+  const pathname = usePathname()
+  const navData = getNavData(pathname)
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -90,7 +80,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <a href="/dashboard">
                 <IconInnerShadowTop className="!size-5" />
                 <span className="text-base font-semibold">Akademia wiedzy</span>
               </a>
@@ -99,8 +89,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navData.navMain} />
+        <NavSecondary items={navData.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

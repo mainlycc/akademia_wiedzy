@@ -1,19 +1,14 @@
 import { redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-import { DataTable } from "@/components/data-table"
-import { LessonSchedule } from "@/components/lesson-schedule"
-import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { Badge } from "@/components/ui/badge"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { TutorSchedule } from "@/components/tutor-schedule"
 
-import data from "./data.json"
-
-export default async function Page() {
+export default async function GrafikPage() {
   const supabase = await createSupabaseServerClient()
   const {
     data: { user },
@@ -62,10 +57,12 @@ export default async function Page() {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-4 lg:px-6">
-                <LessonSchedule date={new Date()} />
+                <h1 className="text-2xl font-bold">Grafik zajęć</h1>
+                <p className="text-muted-foreground">Zarządzaj harmonogramem korepetycji</p>
               </div>
-              <SectionCards />
-              <DataTable data={data} />
+              <div className="px-4 lg:px-6">
+                <TutorSchedule />
+              </div>
             </div>
           </div>
         </div>

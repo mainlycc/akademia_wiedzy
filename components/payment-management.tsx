@@ -16,11 +16,22 @@ import {
   Clock, 
   XCircle,
   Plus,
-  Filter
 } from "lucide-react"
 
+interface PaymentData {
+  name: string
+  [key: string]: unknown
+}
+
+interface PaymentItem extends PaymentData {
+  paymentStatus: 'paid' | 'pending' | 'overdue' | 'cancelled'
+  amount: number
+  dueDate: string
+  lastReminder: string | null
+}
+
 // Rozszerzamy dane o status płatności
-const addPaymentStatus = (data: any[]) => {
+const addPaymentStatus = (data: PaymentData[]): PaymentItem[] => {
   return data.map((item, index) => ({
     ...item,
     paymentStatus: index % 4 === 0 ? 'paid' : index % 4 === 1 ? 'pending' : index % 4 === 2 ? 'overdue' : 'cancelled',
@@ -45,7 +56,7 @@ const getStatusBadge = (status: string) => {
   }
 }
 
-const getStatusCounts = (data: any[]) => {
+const getStatusCounts = (data: PaymentItem[]) => {
   const counts = data.reduce((acc, item) => {
     acc[item.paymentStatus] = (acc[item.paymentStatus] || 0) + 1
     return acc
@@ -61,11 +72,11 @@ const getStatusCounts = (data: any[]) => {
 }
 
 interface PaymentManagementProps {
-  data: any[]
+  data: PaymentData[]
 }
 
 export function PaymentManagement({ data }: PaymentManagementProps) {
-  const [selectedRows, setSelectedRows] = useState<any[]>([])
+  const [selectedRows, setSelectedRows] = useState<PaymentItem[]>([])
   const [activeTab, setActiveTab] = useState("all")
   
   const dataWithPayments = addPaymentStatus(data)

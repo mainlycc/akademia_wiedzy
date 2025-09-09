@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { IconX, IconEdit, IconCheck, IconX as IconCancel, IconPlus, IconChevronDown, IconUserPlus } from "@tabler/icons-react"
+import { IconX, IconCheck, IconX as IconCancel, IconPlus, IconChevronDown, IconUserPlus } from "@tabler/icons-react"
 
 interface Lesson {
   id: string
@@ -230,10 +230,6 @@ export function LessonSchedule({
     updateLessons(newLessons)
   }
 
-  const startEditTutor = (lessonId: string, currentTutor: string) => {
-    setEditingLesson(lessonId)
-    setEditingTutor(currentTutor)
-  }
 
   const saveTutorEdit = (lessonId: string) => {
     if (editingTutor.trim()) {
@@ -266,18 +262,6 @@ export function LessonSchedule({
     setEditingStudent("")
   }
 
-  const addNewStudent = (lessonId: string) => {
-    if (newStudentName.trim()) {
-      const newLessons = localLessons.map(lesson => 
-        lesson.id === lessonId 
-          ? { ...lesson, student: newStudentName.trim() }
-          : lesson
-      )
-      updateLessons(newLessons)
-    }
-    setShowAddStudent(null)
-    setNewStudentName("")
-  }
 
   const addNewLesson = (subject: string, time: string) => {
     if (newStudentName.trim()) {

@@ -56,8 +56,23 @@ const students = [
   { id: "5", name: "Tomasz Zieliński", email: "tomasz.zielinski@email.com" },
 ]
 
+interface Lesson {
+  id: number
+  tutorId: string
+  tutorName: string
+  studentId: string
+  student: string
+  subject: string
+  startTime: string
+  endTime: string
+  date: string
+  notes: string
+  price: number
+  status: string
+}
+
 interface AddLessonDialogProps {
-  onLessonAdded?: (lesson: any) => void
+  onLessonAdded?: (lesson: Lesson) => void
 }
 
 export function AddLessonDialog({ onLessonAdded }: AddLessonDialogProps) {

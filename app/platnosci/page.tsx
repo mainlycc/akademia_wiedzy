@@ -39,7 +39,7 @@ export default async function PlatnosciPage() {
   const headerUserData = {
     name: userData.name,
     email: userData.email,
-    role: role
+    role: role ?? undefined
   }
 
   return (

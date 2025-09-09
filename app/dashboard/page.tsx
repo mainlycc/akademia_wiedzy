@@ -43,7 +43,7 @@ export default async function Page() {
   const headerUserData = {
     name: userData.name,
     email: userData.email,
-    role: role
+    role: role || undefined
   }
 
   return (

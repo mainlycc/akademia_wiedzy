@@ -265,15 +265,15 @@ export function PaymentManagement({ data }: PaymentManagementProps) {
                 {/* Tabela z danymi */}
                 <DataTable 
                   data={filteredData.map(item => ({
-                    id: item.id || Math.random(),
+                    id: (item as any).id || Math.floor(Math.random() * 1000000),
                     imieNazwisko: item.name,
-                    przedmiot: item.przedmiot || 'Nieznany',
-                    poziom: item.poziom || 'Nieznany',
+                    przedmiot: (item as any).przedmiot || 'Nieznany',
+                    poziom: (item as any).poziom || 'Nieznany',
                     status: item.paymentStatus === 'paid' ? 'Zakończone' : 
                             item.paymentStatus === 'pending' ? 'W trakcie' :
                             item.paymentStatus === 'overdue' ? 'Przeterminowane' : 'Anulowane',
-                    liczbaGodzin: item.liczbaGodzin || 0,
-                    korepetytor: item.korepetytor || 'Nieprzypisany'
+                    liczbaGodzin: (item as any).liczbaGodzin || 0,
+                    korepetytor: (item as any).korepetytor || 'Nieprzypisany'
                   }))} 
                 />
               </div>

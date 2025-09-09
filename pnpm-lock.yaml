@@ -86,9 +86,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      date-fns:
-        specifier: ^3.6.0
-        version: 3.6.0
       lucide-react:
         specifier: ^0.542.0
         version: 0.542.0(react@19.1.0)

@@ -58,7 +58,7 @@ const students = [
 type CreateType = "lesson" | "student" | "tutor"
 
 interface QuickCreateDialogProps {
-  onItemAdded?: (type: CreateType, item: any) => void
+  onItemAdded?: (type: CreateType, item: Record<string, unknown>) => void
 }
 
 export function QuickCreateDialog({ onItemAdded }: QuickCreateDialogProps) {
@@ -101,7 +101,7 @@ export function QuickCreateDialog({ onItemAdded }: QuickCreateDialogProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    let newItem: any = {}
+    let newItem: Record<string, unknown> = {}
     let isValid = true
 
     switch (createType) {

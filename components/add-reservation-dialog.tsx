@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { pl } from "date-fns/locale"
-import { IconCalendar, IconPlus, IconClock } from "@tabler/icons-react"
+import { IconCalendar, IconPlus } from "@tabler/icons-react"
 
 export function AddReservationDialog() {
   const [open, setOpen] = React.useState(false)
@@ -43,7 +43,7 @@ export function AddReservationDialog() {
     notes: "",
   })
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | Date | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

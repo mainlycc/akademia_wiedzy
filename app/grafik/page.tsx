@@ -38,7 +38,7 @@ export default async function GrafikPage() {
   const headerUserData = {
     name: userData.name,
     email: userData.email,
-    role: role
+    role: role ?? undefined
   }
 
   return (

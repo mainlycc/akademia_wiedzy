@@ -265,23 +265,15 @@ export function PaymentManagement({ data }: PaymentManagementProps) {
                 {/* Tabela z danymi */}
                 <DataTable 
                   data={filteredData.map(item => ({
-                    ...item,
-                    status: getStatusBadge(item.paymentStatus),
-                    amount: `${item.amount} zł`,
-                    dueDate: item.dueDate,
-                    actions: (
-                      <div className="flex space-x-1">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Bell className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <FileText className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )
+                    id: item.id || Math.random(),
+                    imieNazwisko: item.name,
+                    przedmiot: item.przedmiot || 'Nieznany',
+                    poziom: item.poziom || 'Nieznany',
+                    status: item.paymentStatus === 'paid' ? 'Zakończone' : 
+                            item.paymentStatus === 'pending' ? 'W trakcie' :
+                            item.paymentStatus === 'overdue' ? 'Przeterminowane' : 'Anulowane',
+                    liczbaGodzin: item.liczbaGodzin || 0,
+                    korepetytor: item.korepetytor || 'Nieprzypisany'
                   }))} 
                 />
               </div>

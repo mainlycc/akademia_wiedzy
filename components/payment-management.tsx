@@ -20,6 +20,11 @@ import {
 
 interface PaymentData {
   name: string
+  id?: number
+  przedmiot?: string
+  poziom?: string
+  liczbaGodzin?: number
+  korepetytor?: string
   [key: string]: unknown
 }
 
@@ -76,7 +81,6 @@ interface PaymentManagementProps {
 }
 
 export function PaymentManagement({ data }: PaymentManagementProps) {
-  const [selectedRows, setSelectedRows] = useState<PaymentItem[]>([])
   const [activeTab, setActiveTab] = useState("all")
   
   const dataWithPayments = addPaymentStatus(data)
@@ -87,17 +91,17 @@ export function PaymentManagement({ data }: PaymentManagementProps) {
     : dataWithPayments.filter(item => item.paymentStatus === activeTab)
 
   const handleRemindPayment = () => {
-    console.log("Wysyłanie przypomnienia o płatności dla:", selectedRows.map(row => row.name))
+    console.log("Wysyłanie przypomnienia o płatności")
     // Tutaj będzie logika wysyłania przypomnienia
   }
 
   const handleGenerateInvoice = () => {
-    console.log("Generowanie faktury dla:", selectedRows.map(row => row.name))
+    console.log("Generowanie faktury")
     // Tutaj będzie logika generowania faktury
   }
 
   const handleSendInvoice = () => {
-    console.log("Wysyłanie faktury dla:", selectedRows.map(row => row.name))
+    console.log("Wysyłanie faktury")
     // Tutaj będzie logika wysyłania faktury
   }
 
@@ -189,40 +193,29 @@ export function PaymentManagement({ data }: PaymentManagementProps) {
             <Button 
               variant="outline" 
               onClick={handleRemindPayment}
-              disabled={selectedRows.length === 0}
             >
               <Bell className="h-4 w-4 mr-2" />
-              Przypomnij o płatności ({selectedRows.length})
+              Przypomnij o płatności
             </Button>
             <Button 
               variant="outline" 
               onClick={handleGenerateInvoice}
-              disabled={selectedRows.length === 0}
             >
               <FileText className="h-4 w-4 mr-2" />
-              Wygeneruj fakturę ({selectedRows.length})
+              Wygeneruj fakturę
             </Button>
             <Button 
               variant="outline" 
               onClick={handleSendInvoice}
-              disabled={selectedRows.length === 0}
             >
               <Send className="h-4 w-4 mr-2" />
-              Wyślij fakturę ({selectedRows.length})
+              Wyślij fakturę
             </Button>
             <Button variant="outline">
               <Eye className="h-4 w-4 mr-2" />
               Podgląd faktury
             </Button>
           </div>
-          {selectedRows.length > 0 && (
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
-                Wybrano {selectedRows.length} {selectedRows.length === 1 ? 'płatność' : 'płatności'}: 
-                {selectedRows.map(row => ` ${row.name}`).join(', ')}
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -265,15 +258,15 @@ export function PaymentManagement({ data }: PaymentManagementProps) {
                 {/* Tabela z danymi */}
                 <DataTable 
                   data={filteredData.map(item => ({
-                    id: (item as any).id || Math.floor(Math.random() * 1000000),
+                    id: item.id || Math.floor(Math.random() * 1000000),
                     imieNazwisko: item.name,
-                    przedmiot: (item as any).przedmiot || 'Nieznany',
-                    poziom: (item as any).poziom || 'Nieznany',
+                    przedmiot: item.przedmiot || 'Nieznany',
+                    poziom: item.poziom || 'Nieznany',
                     status: item.paymentStatus === 'paid' ? 'Zakończone' : 
                             item.paymentStatus === 'pending' ? 'W trakcie' :
                             item.paymentStatus === 'overdue' ? 'Przeterminowane' : 'Anulowane',
-                    liczbaGodzin: (item as any).liczbaGodzin || 0,
-                    korepetytor: (item as any).korepetytor || 'Nieprzypisany'
+                    liczbaGodzin: item.liczbaGodzin || 0,
+                    korepetytor: item.korepetytor || 'Nieprzypisany'
                   }))} 
                 />
               </div>

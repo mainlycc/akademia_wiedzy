@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { AddLessonDialog } from "@/components/add-lesson-dialog"
 
 // Przykładowe dane korepetytorów
@@ -71,13 +71,16 @@ export function TutorSchedule() {
     })
   }
 
-  const handleLessonAdded = (newLesson: any) => {
+  const handleLessonAdded = (newLesson: {
+    id: number
+    tutorId: string
+    student: string
+    subject: string
+    startTime: string
+    endTime: string
+    date: string
+  }) => {
     setLessons(prev => [...prev, newLesson])
-  }
-
-  const getTutorName = (tutorId: string) => {
-    const tutor = tutors.find(t => t.id === tutorId)
-    return tutor ? tutor.name : "Nieznany"
   }
 
   return (

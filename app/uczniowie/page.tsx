@@ -28,7 +28,7 @@ export default async function StudentsPage() {
   role = profile?.role ?? null
 
   // 1) Pobierz listę uczniów
-  const { data: students, error: studentsError } = await supabase
+  const { data: students } = await supabase
     .from("students")
     .select("id, first_name, last_name, active")
     .order("last_name", { ascending: true })
@@ -57,8 +57,8 @@ export default async function StudentsPage() {
   const studentIdToTutorName = new Map<string, string>()
   for (const e of activeEnrollments ?? []) {
     if (e.student_id && e.tutor_id) {
-      const tutorsAny: any = e?.tutors
-      const tutorRel: any = Array.isArray(tutorsAny) ? tutorsAny[0] : tutorsAny
+      const tutorsData = e?.tutors as { first_name?: string; last_name?: string } | null
+      const tutorRel = Array.isArray(tutorsData) ? tutorsData[0] : tutorsData
       const tutorName = [tutorRel?.first_name, tutorRel?.last_name]
         .filter(Boolean)
         .join(" ") || "Nieznany tutor"
@@ -66,7 +66,7 @@ export default async function StudentsPage() {
     }
   }
 
-  const tableData = (students ?? []).map((s: any) => {
+  const tableData = (students ?? []).map((s: { id: string; first_name?: string; last_name?: string; active?: boolean }) => {
     const fullName = [s.first_name, s.last_name].filter(Boolean).join(" ") || "—"
     const tutorName = studentIdToTutorName.get(s.id)
 

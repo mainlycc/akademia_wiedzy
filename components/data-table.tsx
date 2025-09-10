@@ -32,7 +32,6 @@ import {
   IconLayoutColumns,
   IconLoader,
   IconPlus,
-  IconTrendingUp,
 } from "@tabler/icons-react"
 import {
   ColumnDef,
@@ -220,61 +219,65 @@ const createColumns = (tutors: Array<{ id: string; first_name: string; last_name
           <Label htmlFor={`${row.original.id}-korepetytor`} className="sr-only">
             Korepetytor
           </Label>
-          <Select onValueChange={async (tutorId) => {
+          <Select onValueChange={(tutorId) => {
             if (!tutorId) return
             
-            const supabase = createSupabaseBrowserClient()
-            
-            try {
-              // Sprawdź czy już istnieje enrollment dla tego ucznia
-              const { data: existingEnrollment } = await supabase
-                .from("enrollments")
-                .select("id")
-                .eq("student_id", row.original.id)
-                .eq("status", "active")
-                .maybeSingle()
-
-              if (existingEnrollment) {
-                // Aktualizuj istniejący enrollment
-                const { error } = await supabase
+            const assignTutor = async () => {
+              const supabase = createSupabaseBrowserClient()
+              
+              try {
+                // Sprawdź czy już istnieje enrollment dla tego ucznia
+                const { data: existingEnrollment } = await supabase
                   .from("enrollments")
-                  .update({ tutor_id: tutorId })
-                  .eq("id", existingEnrollment.id)
-
-                if (error) throw error
-              } else {
-                // Utwórz nowy enrollment (potrzebujemy subject_id - na razie użyjemy pierwszego dostępnego)
-                const { data: firstSubject } = await supabase
-                  .from("subjects")
                   .select("id")
-                  .eq("active", true)
-                  .limit(1)
-                  .single()
+                  .eq("student_id", row.original.id)
+                  .eq("status", "active")
+                  .maybeSingle()
 
-                if (!firstSubject) {
-                  throw new Error("Brak dostępnych przedmiotów")
+                if (existingEnrollment) {
+                  // Aktualizuj istniejący enrollment
+                  const { error } = await supabase
+                    .from("enrollments")
+                    .update({ tutor_id: tutorId })
+                    .eq("id", existingEnrollment.id)
+
+                  if (error) throw error
+                } else {
+                  // Utwórz nowy enrollment (potrzebujemy subject_id - na razie użyjemy pierwszego dostępnego)
+                  const { data: firstSubject } = await supabase
+                    .from("subjects")
+                    .select("id")
+                    .eq("active", true)
+                    .limit(1)
+                    .single()
+
+                  if (!firstSubject) {
+                    throw new Error("Brak dostępnych przedmiotów")
+                  }
+
+                  const { error } = await supabase
+                    .from("enrollments")
+                    .insert({
+                      student_id: row.original.id,
+                      subject_id: firstSubject.id,
+                      tutor_id: tutorId,
+                      status: "active"
+                    })
+
+                  if (error) throw error
                 }
 
-                const { error } = await supabase
-                  .from("enrollments")
-                  .insert({
-                    student_id: row.original.id,
-                    subject_id: firstSubject.id,
-                    tutor_id: tutorId,
-                    status: "active"
-                  })
-
-                if (error) throw error
+                toast.success(`Przypisano korepetytora dla ${row.original.imieNazwisko}`)
+                
+                // Odśwież stronę
+                window.location.reload()
+              } catch (error) {
+                console.error("Błąd przypisywania korepetytora:", error)
+                toast.error("Błąd przypisywania korepetytora")
               }
-
-              toast.success(`Przypisano korepetytora dla ${row.original.imieNazwisko}`)
-              
-              // Odśwież stronę
-              window.location.reload()
-            } catch (error) {
-              console.error("Błąd przypisywania korepetytora:", error)
-              toast.error("Błąd przypisywania korepetytora")
             }
+            
+            assignTutor()
           }}>
             <SelectTrigger
               className="w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"

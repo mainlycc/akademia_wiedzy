@@ -633,15 +633,6 @@ export function DataTable({
 
 
 // Typy dla danych z Supabase
-interface StudentFromDB {
-  id: string
-  first_name: string
-  last_name: string
-  active: boolean
-  notes?: string
-  created_at: string
-}
-
 interface ParentFromDB {
   id: string
   first_name: string
@@ -667,7 +658,7 @@ interface StudentParentRelation {
   parents: ParentFromDB[]
 }
 
-interface EnrollmentFromDB {
+interface EnrollmentData {
   id: string
   status: 'active' | 'paused' | 'ended'
   subjects: SubjectFromDB
@@ -797,7 +788,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         )
 
       // Przekształć dane przedmiotów na format oczekiwany przez StudentCard
-      const subjectsInfo = (enrollments || []).map((enrollment: any) => ({
+      const subjectsInfo = (enrollments as EnrollmentData[] || []).map((enrollment) => ({
         id: enrollment.subjects.id,
         name: enrollment.subjects.name,
         color: enrollment.subjects.color,

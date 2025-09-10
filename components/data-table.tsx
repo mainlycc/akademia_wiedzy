@@ -52,6 +52,7 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { toast } from "sonner"
 import { z } from "zod"
+import { createSupabaseBrowserClient } from "@/lib/supabase/client"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
@@ -107,17 +108,15 @@ import {
 } from "@/components/ui/tabs"
 
 export const schema = z.object({
-  id: z.number(),
+  id: z.string(),
   imieNazwisko: z.string(),
   przedmiot: z.string(),
-  poziom: z.string(),
   status: z.string(),
-  liczbaGodzin: z.number(),
   korepetytor: z.string(),
 })
 
 // Create a separate component for the drag handle
-function DragHandle({ id }: { id: number }) {
+function DragHandle({ id }: { id: string }) {
   const { attributes, listeners } = useSortable({
     id,
   })
@@ -136,7 +135,7 @@ function DragHandle({ id }: { id: number }) {
   )
 }
 
-const columns: ColumnDef<z.infer<typeof schema>>[] = [
+const createColumns = (tutors: Array<{ id: string; first_name: string; last_name: string }>): ColumnDef<z.infer<typeof schema>>[] => [
   {
     id: "drag",
     header: () => null,
@@ -188,17 +187,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     ),
   },
   {
-    accessorKey: "poziom",
-    header: "Poziom",
-    cell: ({ row }) => (
-      <div className="w-24">
-        <Badge variant="secondary" className="px-1.5">
-          {row.original.poziom}
-        </Badge>
-      </div>
-    ),
-  },
-  {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => (
@@ -210,32 +198,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         ) : null}
         {row.original.status}
       </Badge>
-    ),
-  },
-  {
-    accessorKey: "liczbaGodzin",
-    header: () => <div className="w-full text-right">Liczba godzin</div>,
-    cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Zapisywanie ${row.original.imieNazwisko}`,
-            success: "Zapisano",
-            error: "Błąd",
-          })
-        }}
-      >
-        <Label htmlFor={`${row.original.id}-godziny`} className="sr-only">
-          Liczba godzin
-        </Label>
-        <Input
-          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-          defaultValue={row.original.liczbaGodzin}
-          id={`${row.original.id}-godziny`}
-          type="number"
-        />
-      </form>
     ),
   },
   {
@@ -258,7 +220,62 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           <Label htmlFor={`${row.original.id}-korepetytor`} className="sr-only">
             Korepetytor
           </Label>
-          <Select>
+          <Select onValueChange={async (tutorId) => {
+            if (!tutorId) return
+            
+            const supabase = createSupabaseBrowserClient()
+            
+            try {
+              // Sprawdź czy już istnieje enrollment dla tego ucznia
+              const { data: existingEnrollment } = await supabase
+                .from("enrollments")
+                .select("id")
+                .eq("student_id", row.original.id)
+                .eq("status", "active")
+                .maybeSingle()
+
+              if (existingEnrollment) {
+                // Aktualizuj istniejący enrollment
+                const { error } = await supabase
+                  .from("enrollments")
+                  .update({ tutor_id: tutorId })
+                  .eq("id", existingEnrollment.id)
+
+                if (error) throw error
+              } else {
+                // Utwórz nowy enrollment (potrzebujemy subject_id - na razie użyjemy pierwszego dostępnego)
+                const { data: firstSubject } = await supabase
+                  .from("subjects")
+                  .select("id")
+                  .eq("active", true)
+                  .limit(1)
+                  .single()
+
+                if (!firstSubject) {
+                  throw new Error("Brak dostępnych przedmiotów")
+                }
+
+                const { error } = await supabase
+                  .from("enrollments")
+                  .insert({
+                    student_id: row.original.id,
+                    subject_id: firstSubject.id,
+                    tutor_id: tutorId,
+                    status: "active"
+                  })
+
+                if (error) throw error
+              }
+
+              toast.success(`Przypisano korepetytora dla ${row.original.imieNazwisko}`)
+              
+              // Odśwież stronę
+              window.location.reload()
+            } catch (error) {
+              console.error("Błąd przypisywania korepetytora:", error)
+              toast.error("Błąd przypisywania korepetytora")
+            }
+          }}>
             <SelectTrigger
               className="w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
               size="sm"
@@ -267,11 +284,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
               <SelectValue placeholder="Przypisz korepetytora" />
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="Anna Kowalska">Anna Kowalska</SelectItem>
-              <SelectItem value="Piotr Nowak">Piotr Nowak</SelectItem>
-              <SelectItem value="Maria Wiśniewska">Maria Wiśniewska</SelectItem>
-              <SelectItem value="Tomasz Kaczmarek">Tomasz Kaczmarek</SelectItem>
-              <SelectItem value="Katarzyna Zielińska">Katarzyna Zielińska</SelectItem>
+              {tutors.map((tutor) => (
+                <SelectItem key={tutor.id} value={tutor.id}>
+                  {[tutor.first_name, tutor.last_name].filter(Boolean).join(" ")}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </>
@@ -331,8 +348,10 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 
 export function DataTable({
   data: initialData,
+  tutors = [],
 }: {
   data: z.infer<typeof schema>[]
+  tutors?: Array<{ id: string; first_name: string; last_name: string }>
 }) {
   const [data, setData] = React.useState(() => initialData)
   const [rowSelection, setRowSelection] = React.useState({})
@@ -358,6 +377,8 @@ export function DataTable({
     [data]
   )
 
+  const columns = createColumns(tutors)
+  
   const table = useReactTable({
     data,
     columns,
@@ -368,7 +389,7 @@ export function DataTable({
       columnFilters,
       pagination,
     },
-    getRowId: (row) => row.id.toString(),
+    getRowId: (row) => row.id,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
@@ -654,7 +675,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.imieNazwisko}</DrawerTitle>
           <DrawerDescription>
-            Szczegóły korepetycji - {item.przedmiot} ({item.poziom})
+            Szczegóły korepetycji - {item.przedmiot}
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
@@ -701,103 +722,26 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                 </AreaChart>
               </ChartContainer>
               <Separator />
-              <div className="grid gap-2">
-                <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month{" "}
-                  <IconTrendingUp className="size-4" />
-                </div>
-                <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
-                </div>
-              </div>
-              <Separator />
             </>
           )}
-          <form className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="imieNazwisko">Imię i Nazwisko</Label>
-              <Input id="imieNazwisko" defaultValue={item.imieNazwisko} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label>Przedmiot</Label>
+              <div>{item.przedmiot}</div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="przedmiot">Przedmiot</Label>
-                <Select defaultValue={item.przedmiot}>
-                  <SelectTrigger id="przedmiot" className="w-full">
-                    <SelectValue placeholder="Wybierz przedmiot" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Matematyka">Matematyka</SelectItem>
-                    <SelectItem value="Fizyka">Fizyka</SelectItem>
-                    <SelectItem value="Chemia">Chemia</SelectItem>
-                    <SelectItem value="Biologia">Biologia</SelectItem>
-                    <SelectItem value="Język polski">Język polski</SelectItem>
-                    <SelectItem value="Język angielski">Język angielski</SelectItem>
-                    <SelectItem value="Historia">Historia</SelectItem>
-                    <SelectItem value="Geografia">Geografia</SelectItem>
-                    <SelectItem value="Informatyka">Informatyka</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="poziom">Poziom</Label>
-                <Select defaultValue={item.poziom}>
-                  <SelectTrigger id="poziom" className="w-full">
-                    <SelectValue placeholder="Wybierz poziom" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Szkoła podstawowa">Szkoła podstawowa</SelectItem>
-                    <SelectItem value="Gimnazjum">Gimnazjum</SelectItem>
-                    <SelectItem value="Liceum">Liceum</SelectItem>
-                    <SelectItem value="Studia">Studia</SelectItem>
-                    <SelectItem value="Matura">Matura</SelectItem>
-                    <SelectItem value="Egzamin ósmoklasisty">Egzamin ósmoklasisty</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Status</Label>
+              <div>{item.status}</div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="status">Status</Label>
-                <Select defaultValue={item.status}>
-                  <SelectTrigger id="status" className="w-full">
-                    <SelectValue placeholder="Wybierz status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Zakończone">Zakończone</SelectItem>
-                    <SelectItem value="W trakcie">W trakcie</SelectItem>
-                    <SelectItem value="Zaplanowane">Zaplanowane</SelectItem>
-                    <SelectItem value="Anulowane">Anulowane</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="liczbaGodzin">Liczba godzin</Label>
-                <Input id="liczbaGodzin" defaultValue={item.liczbaGodzin} type="number" />
-              </div>
-            </div>
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="korepetytor">Korepetytor</Label>
-              <Select defaultValue={item.korepetytor}>
-                <SelectTrigger id="korepetytor" className="w-full">
-                  <SelectValue placeholder="Wybierz korepetytora" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Anna Kowalska">Anna Kowalska</SelectItem>
-                  <SelectItem value="Piotr Nowak">Piotr Nowak</SelectItem>
-                  <SelectItem value="Maria Wiśniewska">Maria Wiśniewska</SelectItem>
-                  <SelectItem value="Tomasz Kaczmarek">Tomasz Kaczmarek</SelectItem>
-                  <SelectItem value="Katarzyna Zielińska">Katarzyna Zielińska</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </form>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Korepetytor</Label>
+            <div>{item.korepetytor}</div>
+          </div>
         </div>
         <DrawerFooter>
-          <Button>Zapisz</Button>
           <DrawerClose asChild>
-            <Button variant="outline">Gotowe</Button>
+            <Button variant="outline">Zamknij</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

@@ -9,89 +9,12 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 
-// Przykładowe dane uczniów
-const studentsData = [
-  {
-    id: 1,
-    imieNazwisko: "Anna Kowalska",
-    przedmiot: "Matematyka",
-    poziom: "Liceum",
-    status: "W trakcie",
-    liczbaGodzin: 24,
-    korepetytor: "Piotr Nowak",
-  },
-  {
-    id: 2,
-    imieNazwisko: "Jan Wiśniewski",
-    przedmiot: "Fizyka",
-    poziom: "Studia",
-    status: "Zakończone",
-    liczbaGodzin: 32,
-    korepetytor: "Maria Wiśniewska",
-  },
-  {
-    id: 3,
-    imieNazwisko: "Katarzyna Zielińska",
-    przedmiot: "Chemia",
-    poziom: "Matura",
-    status: "W trakcie",
-    liczbaGodzin: 18,
-    korepetytor: "Tomasz Kaczmarek",
-  },
-  {
-    id: 4,
-    imieNazwisko: "Michał Nowak",
-    przedmiot: "Język angielski",
-    poziom: "Gimnazjum",
-    status: "Zaplanowane",
-    liczbaGodzin: 0,
-    korepetytor: "Przypisz korepetytora",
-  },
-  {
-    id: 5,
-    imieNazwisko: "Aleksandra Kaczmarek",
-    przedmiot: "Biologia",
-    poziom: "Liceum",
-    status: "W trakcie",
-    liczbaGodzin: 15,
-    korepetytor: "Katarzyna Zielińska",
-  },
-  {
-    id: 6,
-    imieNazwisko: "Piotr Kowalski",
-    przedmiot: "Historia",
-    poziom: "Szkoła podstawowa",
-    status: "Zakończone",
-    liczbaGodzin: 28,
-    korepetytor: "Anna Kowalska",
-  },
-  {
-    id: 7,
-    imieNazwisko: "Magdalena Wiśniewska",
-    przedmiot: "Geografia",
-    poziom: "Liceum",
-    status: "W trakcie",
-    liczbaGodzin: 12,
-    korepetytor: "Piotr Nowak",
-  },
-  {
-    id: 8,
-    imieNazwisko: "Tomasz Zieliński",
-    przedmiot: "Informatyka",
-    poziom: "Studia",
-    status: "Zaplanowane",
-    liczbaGodzin: 0,
-    korepetytor: "Przypisz korepetytora",
-  },
-]
-
 export default async function StudentsPage() {
   const supabase = await createSupabaseServerClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Przekieruj na logowanie jeśli użytkownik nie jest zalogowany
   if (!user) {
     redirect("/login")
   }
@@ -104,7 +27,59 @@ export default async function StudentsPage() {
     .maybeSingle()
   role = profile?.role ?? null
 
-  // Przygotuj dane użytkownika dla sidebar
+  // 1) Pobierz listę uczniów
+  const { data: students, error: studentsError } = await supabase
+    .from("students")
+    .select("id, first_name, last_name, active")
+    .order("last_name", { ascending: true })
+
+  // 2) Pobierz listę dostępnych tutorów
+  const { data: tutors } = await supabase
+    .from("tutors")
+    .select("id, first_name, last_name, active")
+    .eq("active", true)
+    .order("last_name", { ascending: true })
+
+  // 3) Pobierz aktywne zapisy, które są widoczne dla bieżącego użytkownika
+  //    (Tutor zobaczy tylko swoje; Admin zobaczy wszystkie)
+  const { data: activeEnrollments } = await supabase
+    .from("enrollments")
+    .select(`
+      id, 
+      student_id, 
+      tutor_id, 
+      status,
+      tutors:tutor_id ( first_name, last_name )
+    `)
+    .eq("status", "active")
+
+  // Zbuduj mapę student_id -> nazwa tutora (wg widocznych zapisów)
+  const studentIdToTutorName = new Map<string, string>()
+  for (const e of activeEnrollments ?? []) {
+    if (e.student_id && e.tutor_id) {
+      const tutorsAny: any = e?.tutors
+      const tutorRel: any = Array.isArray(tutorsAny) ? tutorsAny[0] : tutorsAny
+      const tutorName = [tutorRel?.first_name, tutorRel?.last_name]
+        .filter(Boolean)
+        .join(" ") || "Nieznany tutor"
+      studentIdToTutorName.set(e.student_id as string, tutorName)
+    }
+  }
+
+  const tableData = (students ?? []).map((s: any) => {
+    const fullName = [s.first_name, s.last_name].filter(Boolean).join(" ") || "—"
+    const tutorName = studentIdToTutorName.get(s.id)
+
+    return {
+      id: s.id as string,
+      imieNazwisko: fullName,
+      // Na widoku uczniów nie mamy naturalnego przedmiotu/statusu, zostawmy puste/„—"
+      przedmiot: "—",
+      status: s.active ? "W trakcie" : "Zakończone",
+      korepetytor: tutorName || "Przypisz korepetytora",
+    }
+  })
+
   const userData = {
     name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Użytkownik',
     email: user.email || '',
@@ -136,7 +111,7 @@ export default async function StudentsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="text-sm">
-                      {studentsData.length} uczniów
+                      {(tableData?.length ?? 0)} uczniów
                     </Badge>
                     {role && (
                       <Badge variant="outline" className="text-sm">
@@ -146,7 +121,7 @@ export default async function StudentsPage() {
                   </div>
                 </div>
               </div>
-              <DataTable data={studentsData} />
+              <DataTable data={tableData} tutors={tutors || []} />
             </div>
           </div>
         </div>

@@ -797,7 +797,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         )
 
       // Przekształć dane przedmiotów na format oczekiwany przez StudentCard
-      const subjectsInfo = (enrollments as EnrollmentFromDB[] || []).map((enrollment) => ({
+      const subjectsInfo = (enrollments || []).map((enrollment: any) => ({
         id: enrollment.subjects.id,
         name: enrollment.subjects.name,
         color: enrollment.subjects.color,

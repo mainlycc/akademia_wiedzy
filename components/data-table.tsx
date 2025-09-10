@@ -664,7 +664,7 @@ interface TutorFromDB {
 interface StudentParentRelation {
   is_primary: boolean
   relation: 'mother' | 'father' | 'guardian' | 'other'
-  parents: ParentFromDB | null
+  parents: ParentFromDB
 }
 
 interface EnrollmentFromDB {
@@ -783,13 +783,13 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
 
       // Przekształć dane rodziców na format oczekiwany przez StudentCard
       const parentsInfo = (parents as StudentParentRelation[] || [])
-        .filter((sp) => sp.parents !== null)
+        .filter((sp) => sp.parents)
         .map((sp) => ({
-          id: sp.parents!.id,
-          first_name: sp.parents!.first_name,
-          last_name: sp.parents!.last_name,
-          email: sp.parents!.email,
-          phone: sp.parents!.phone,
+          id: sp.parents.id,
+          first_name: sp.parents.first_name,
+          last_name: sp.parents.last_name,
+          email: sp.parents.email,
+          phone: sp.parents.phone,
           relation: sp.relation,
           is_primary: sp.is_primary,
         }))

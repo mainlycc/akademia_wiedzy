@@ -20,7 +20,7 @@ import {
 
 interface PaymentData {
   name: string
-  id?: number
+  id?: string
   przedmiot?: string
   poziom?: string
   liczbaGodzin?: number
@@ -258,7 +258,7 @@ export function PaymentManagement({ data }: PaymentManagementProps) {
                 {/* Tabela z danymi */}
                 <DataTable 
                   data={filteredData.map(item => ({
-                    id: item.id || Math.floor(Math.random() * 1000000),
+                    id: item.id || Math.floor(Math.random() * 1000000).toString(),
                     imieNazwisko: item.name,
                     przedmiot: item.przedmiot || 'Nieznany',
                     poziom: item.poziom || 'Nieznany',

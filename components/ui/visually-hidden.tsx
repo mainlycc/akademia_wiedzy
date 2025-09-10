@@ -1,14 +1,22 @@
 "use client"
 
 import * as React from "react"
-import * as VisuallyHiddenPrimitive from "@radix-ui/react-visually-hidden"
+import { cn } from "@/lib/utils"
 
 const VisuallyHidden = React.forwardRef<
-  React.ElementRef<typeof VisuallyHiddenPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof VisuallyHiddenPrimitive.Root>
->(({ ...props }, ref) => (
-  <VisuallyHiddenPrimitive.Root ref={ref} {...props} />
+  HTMLSpanElement,
+  React.HTMLAttributes<HTMLSpanElement>
+>(({ className, ...props }, ref) => (
+  <span
+    ref={ref}
+    className={cn(
+      "absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0",
+      "sr-only",
+      className
+    )}
+    {...props}
+  />
 ))
-VisuallyHidden.displayName = VisuallyHiddenPrimitive.Root.displayName
+VisuallyHidden.displayName = "VisuallyHidden"
 
 export { VisuallyHidden }

@@ -632,11 +632,85 @@ export function DataTable({
 }
 
 
+// Typy dla danych z Supabase
+interface StudentFromDB {
+  id: string
+  first_name: string
+  last_name: string
+  active: boolean
+  notes?: string
+  created_at: string
+}
+
+interface ParentFromDB {
+  id: string
+  first_name: string
+  last_name: string
+  email?: string
+  phone?: string
+}
+
+interface SubjectFromDB {
+  id: string
+  name: string
+  color?: string
+}
+
+interface TutorFromDB {
+  first_name: string
+  last_name: string
+}
+
+interface StudentParentRelation {
+  is_primary: boolean
+  relation: 'mother' | 'father' | 'guardian' | 'other'
+  parents: ParentFromDB
+}
+
+interface EnrollmentFromDB {
+  id: string
+  status: 'active' | 'paused' | 'ended'
+  subjects: SubjectFromDB
+  tutors?: TutorFromDB
+}
+
+// Typy dla StudentCard (muszą pasować do interfejsów w student-card.tsx)
+interface StudentCardData {
+  id: string
+  first_name: string
+  last_name: string
+  active: boolean
+  notes?: string
+  created_at: string
+  enrollment_year?: string
+  location?: string
+  class?: string
+  school?: string
+}
+
+interface ParentCardData {
+  id: string
+  first_name: string
+  last_name: string
+  email?: string
+  phone?: string
+  relation: 'mother' | 'father' | 'guardian' | 'other'
+  is_primary: boolean
+}
+
+interface SubjectCardData {
+  id: string
+  name: string
+  color?: string
+  tutor_name?: string
+  status: 'active' | 'paused' | 'ended'
+}
+
 function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile()
-  const [studentData, setStudentData] = React.useState<any>(null)
-  const [parentsData, setParentsData] = React.useState<any[]>([])
-  const [subjectsData, setSubjectsData] = React.useState<any[]>([])
+  const [studentData, setStudentData] = React.useState<StudentCardData | null>(null)
+  const [parentsData, setParentsData] = React.useState<ParentCardData[]>([])
+  const [subjectsData, setSubjectsData] = React.useState<SubjectCardData[]>([])
   const [loading, setLoading] = React.useState(false)
 
   const loadStudentData = React.useCallback(async () => {
@@ -693,7 +767,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
 
       if (enrollmentsError) throw enrollmentsError
 
-      // Przekształć dane ucznia
+      // Przekształć dane ucznia na format oczekiwany przez StudentCard
       const studentInfo = {
         id: student.id,
         first_name: student.first_name,
@@ -707,8 +781,8 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         location: "—", // Można dodać pole location do tabeli students
       }
 
-      // Przekształć dane rodziców
-      const parentsInfo = (parents || []).map((sp: any) => ({
+      // Przekształć dane rodziców na format oczekiwany przez StudentCard
+      const parentsInfo = (parents as StudentParentRelation[] || []).map((sp) => ({
         id: sp.parents.id,
         first_name: sp.parents.first_name,
         last_name: sp.parents.last_name,
@@ -718,8 +792,8 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         is_primary: sp.is_primary,
       }))
 
-      // Przekształć dane przedmiotów
-      const subjectsInfo = (enrollments || []).map((enrollment: any) => ({
+      // Przekształć dane przedmiotów na format oczekiwany przez StudentCard
+      const subjectsInfo = (enrollments as EnrollmentFromDB[] || []).map((enrollment) => ({
         id: enrollment.subjects.id,
         name: enrollment.subjects.name,
         color: enrollment.subjects.color,
@@ -739,7 +813,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
     }
   }, [item.id, studentData])
 
-  const handleContactParent = (parent: any) => {
+  const handleContactParent = (parent: ParentCardData) => {
     if (parent.phone) {
       window.open(`tel:${parent.phone}`)
     } else if (parent.email) {
@@ -747,7 +821,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
     }
   }
 
-  const handleEditStudent = (student: any) => {
+  const handleEditStudent = (student: StudentCardData) => {
     console.log("Edytuj ucznia:", student)
     // Tutaj można dodać logikę do edycji ucznia
   }

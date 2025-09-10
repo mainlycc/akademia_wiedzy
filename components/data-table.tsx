@@ -658,12 +658,13 @@ interface StudentParentRelation {
   parents: ParentFromDB[]
 }
 
-interface EnrollmentData {
+interface SupabaseEnrollment {
   id: string
   status: 'active' | 'paused' | 'ended'
-  subjects: SubjectFromDB
+  subjects: SubjectFromDB | SubjectFromDB[]
   tutors?: TutorFromDB
 }
+
 
 // Typy dla StudentCard (muszą pasować do interfejsów w student-card.tsx)
 interface StudentCardData {
@@ -788,7 +789,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         )
 
       // Przekształć dane przedmiotów na format oczekiwany przez StudentCard
-      const subjectsInfo = (enrollments || []).map((enrollment: any) => {
+      const subjectsInfo = (enrollments as SupabaseEnrollment[] || []).map((enrollment) => {
         // Obsługa przypadku, gdy subjects może być tablicą lub obiektem
         const subject = Array.isArray(enrollment.subjects) 
           ? enrollment.subjects[0] 

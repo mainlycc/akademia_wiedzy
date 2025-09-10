@@ -662,7 +662,7 @@ interface SupabaseEnrollment {
   id: string
   status: 'active' | 'paused' | 'ended'
   subjects: SubjectFromDB | SubjectFromDB[]
-  tutors?: TutorFromDB
+  tutors?: TutorFromDB | TutorFromDB[]
 }
 
 
@@ -795,13 +795,18 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
           ? enrollment.subjects[0] 
           : enrollment.subjects;
         
+        // Obsługa przypadku, gdy tutors może być tablicą lub obiektem
+        const tutor = Array.isArray(enrollment.tutors) 
+          ? enrollment.tutors[0] 
+          : enrollment.tutors;
+        
         return {
           id: subject?.id,
           name: subject?.name,
           color: subject?.color,
           status: enrollment.status,
-          tutor_name: enrollment.tutors ? 
-            `${enrollment.tutors.first_name} ${enrollment.tutors.last_name}` : 
+          tutor_name: tutor ? 
+            `${tutor.first_name} ${tutor.last_name}` : 
             undefined,
         };
       })

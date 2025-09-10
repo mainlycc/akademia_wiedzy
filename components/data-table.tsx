@@ -788,15 +788,22 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         )
 
       // Przekształć dane przedmiotów na format oczekiwany przez StudentCard
-      const subjectsInfo = (enrollments as EnrollmentData[] || []).map((enrollment) => ({
-        id: enrollment.subjects.id,
-        name: enrollment.subjects.name,
-        color: enrollment.subjects.color,
-        status: enrollment.status,
-        tutor_name: enrollment.tutors ? 
-          `${enrollment.tutors.first_name} ${enrollment.tutors.last_name}` : 
-          undefined,
-      }))
+      const subjectsInfo = (enrollments || []).map((enrollment: any) => {
+        // Obsługa przypadku, gdy subjects może być tablicą lub obiektem
+        const subject = Array.isArray(enrollment.subjects) 
+          ? enrollment.subjects[0] 
+          : enrollment.subjects;
+        
+        return {
+          id: subject?.id,
+          name: subject?.name,
+          color: subject?.color,
+          status: enrollment.status,
+          tutor_name: enrollment.tutors ? 
+            `${enrollment.tutors.first_name} ${enrollment.tutors.last_name}` : 
+            undefined,
+        };
+      })
 
       setStudentData(studentInfo)
       setParentsData(parentsInfo)

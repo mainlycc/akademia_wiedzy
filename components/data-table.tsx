@@ -56,6 +56,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { StudentCard } from "@/components/student-card"
 import {
   ChartConfig,
   ChartContainer,
@@ -223,58 +224,58 @@ const createColumns = (tutors: Array<{ id: string; first_name: string; last_name
             if (!tutorId) return
             
             const assignTutor = async () => {
-              const supabase = createSupabaseBrowserClient()
-              
-              try {
-                // Sprawdź czy już istnieje enrollment dla tego ucznia
-                const { data: existingEnrollment } = await supabase
+            const supabase = createSupabaseBrowserClient()
+            
+            try {
+              // Sprawdź czy już istnieje enrollment dla tego ucznia
+              const { data: existingEnrollment } = await supabase
+                .from("enrollments")
+                .select("id")
+                .eq("student_id", row.original.id)
+                .eq("status", "active")
+                .maybeSingle()
+
+              if (existingEnrollment) {
+                // Aktualizuj istniejący enrollment
+                const { error } = await supabase
                   .from("enrollments")
+                  .update({ tutor_id: tutorId })
+                  .eq("id", existingEnrollment.id)
+
+                if (error) throw error
+              } else {
+                // Utwórz nowy enrollment (potrzebujemy subject_id - na razie użyjemy pierwszego dostępnego)
+                const { data: firstSubject } = await supabase
+                  .from("subjects")
                   .select("id")
-                  .eq("student_id", row.original.id)
-                  .eq("status", "active")
-                  .maybeSingle()
+                  .eq("active", true)
+                  .limit(1)
+                  .single()
 
-                if (existingEnrollment) {
-                  // Aktualizuj istniejący enrollment
-                  const { error } = await supabase
-                    .from("enrollments")
-                    .update({ tutor_id: tutorId })
-                    .eq("id", existingEnrollment.id)
-
-                  if (error) throw error
-                } else {
-                  // Utwórz nowy enrollment (potrzebujemy subject_id - na razie użyjemy pierwszego dostępnego)
-                  const { data: firstSubject } = await supabase
-                    .from("subjects")
-                    .select("id")
-                    .eq("active", true)
-                    .limit(1)
-                    .single()
-
-                  if (!firstSubject) {
-                    throw new Error("Brak dostępnych przedmiotów")
-                  }
-
-                  const { error } = await supabase
-                    .from("enrollments")
-                    .insert({
-                      student_id: row.original.id,
-                      subject_id: firstSubject.id,
-                      tutor_id: tutorId,
-                      status: "active"
-                    })
-
-                  if (error) throw error
+                if (!firstSubject) {
+                  throw new Error("Brak dostępnych przedmiotów")
                 }
 
-                toast.success(`Przypisano korepetytora dla ${row.original.imieNazwisko}`)
-                
-                // Odśwież stronę
-                window.location.reload()
-              } catch (error) {
-                console.error("Błąd przypisywania korepetytora:", error)
-                toast.error("Błąd przypisywania korepetytora")
+                const { error } = await supabase
+                  .from("enrollments")
+                  .insert({
+                    student_id: row.original.id,
+                    subject_id: firstSubject.id,
+                    tutor_id: tutorId,
+                    status: "active"
+                  })
+
+                if (error) throw error
               }
+
+              toast.success(`Przypisano korepetytora dla ${row.original.imieNazwisko}`)
+              
+              // Odśwież stronę
+              window.location.reload()
+            } catch (error) {
+              console.error("Błąd przypisywania korepetytora:", error)
+              toast.error("Błąd przypisywania korepetytora")
+            }
             }
             
             assignTutor()
@@ -666,87 +667,158 @@ const chartConfig = {
 
 function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile()
+  const [studentData, setStudentData] = React.useState<any>(null)
+  const [parentsData, setParentsData] = React.useState<any[]>([])
+  const [subjectsData, setSubjectsData] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(false)
+
+  const loadStudentData = React.useCallback(async () => {
+    if (studentData) return // Już załadowane
+    
+    setLoading(true)
+    const supabase = createSupabaseBrowserClient()
+    
+    try {
+      // Pobierz szczegółowe dane ucznia
+      const { data: student, error: studentError } = await supabase
+        .from("students")
+        .select("*")
+        .eq("id", item.id)
+        .single()
+
+      if (studentError) throw studentError
+
+      // Pobierz rodziców ucznia
+      const { data: parents, error: parentsError } = await supabase
+        .from("student_parents")
+        .select(`
+          is_primary,
+          relation,
+          parents:parent_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone
+          )
+        `)
+        .eq("student_id", item.id)
+
+      if (parentsError) throw parentsError
+
+      // Pobierz przedmioty i zapisy ucznia
+      const { data: enrollments, error: enrollmentsError } = await supabase
+        .from("enrollments")
+        .select(`
+          id,
+          status,
+          subjects:subject_id (
+            id,
+            name,
+            color
+          ),
+          tutors:tutor_id (
+            first_name,
+            last_name
+          )
+        `)
+        .eq("student_id", item.id)
+
+      if (enrollmentsError) throw enrollmentsError
+
+      // Przekształć dane ucznia
+      const studentInfo = {
+        id: student.id,
+        first_name: student.first_name,
+        last_name: student.last_name,
+        active: student.active,
+        notes: student.notes,
+        created_at: student.created_at,
+        enrollment_year: new Date(student.created_at).getFullYear().toString(),
+        class: "—", // Można dodać pole class do tabeli students
+        school: "—", // Można dodać pole school do tabeli students
+        location: "—", // Można dodać pole location do tabeli students
+      }
+
+      // Przekształć dane rodziców
+      const parentsInfo = (parents || []).map((sp: any) => ({
+        id: sp.parents.id,
+        first_name: sp.parents.first_name,
+        last_name: sp.parents.last_name,
+        email: sp.parents.email,
+        phone: sp.parents.phone,
+        relation: sp.relation,
+        is_primary: sp.is_primary,
+      }))
+
+      // Przekształć dane przedmiotów
+      const subjectsInfo = (enrollments || []).map((enrollment: any) => ({
+        id: enrollment.subjects.id,
+        name: enrollment.subjects.name,
+        color: enrollment.subjects.color,
+        status: enrollment.status,
+        tutor_name: enrollment.tutors ? 
+          `${enrollment.tutors.first_name} ${enrollment.tutors.last_name}` : 
+          undefined,
+      }))
+
+      setStudentData(studentInfo)
+      setParentsData(parentsInfo)
+      setSubjectsData(subjectsInfo)
+    } catch (error) {
+      console.error("Błąd ładowania danych ucznia:", error)
+    } finally {
+      setLoading(false)
+    }
+  }, [item.id, studentData])
+
+  const handleContactParent = (parent: any) => {
+    if (parent.phone) {
+      window.open(`tel:${parent.phone}`)
+    } else if (parent.email) {
+      window.open(`mailto:${parent.email}`)
+    }
+  }
+
+  const handleEditStudent = (student: any) => {
+    console.log("Edytuj ucznia:", student)
+    // Tutaj można dodać logikę do edycji ucznia
+  }
 
   return (
-    <Drawer direction={isMobile ? "bottom" : "right"}>
+    <Drawer direction={isMobile ? "bottom" : "right"} onOpenChange={(open) => {
+      if (open) {
+        loadStudentData()
+      }
+    }}>
       <DrawerTrigger asChild>
         <Button variant="link" className="text-foreground w-fit px-0 text-left">
           {item.imieNazwisko}
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader className="gap-1">
-          <DrawerTitle>{item.imieNazwisko}</DrawerTitle>
-          <DrawerDescription>
-            Szczegóły korepetycji - {item.przedmiot}
-          </DrawerDescription>
-        </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-          {!isMobile && (
-            <>
-              <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: 0,
-                    right: 10,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                    hide
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Area
-                    dataKey="mobile"
-                    type="natural"
-                    fill="var(--color-mobile)"
-                    fillOpacity={0.6}
-                    stroke="var(--color-mobile)"
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="desktop"
-                    type="natural"
-                    fill="var(--color-desktop)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
-                    stackId="a"
-                  />
-                </AreaChart>
-              </ChartContainer>
-              <Separator />
-            </>
+      <DrawerContent className="max-w-md mx-auto">
+        <div className="p-4">
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-sm text-muted-foreground">Ładowanie danych ucznia...</p>
+              </div>
+            </div>
+          ) : studentData ? (
+            <StudentCard
+              student={studentData}
+              parents={parentsData}
+              subjects={subjectsData}
+              onContactParent={handleContactParent}
+              onEditStudent={handleEditStudent}
+            />
+          ) : (
+            <div className="text-center p-8">
+              <p className="text-sm text-muted-foreground">Nie udało się załadować danych ucznia</p>
+            </div>
           )}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label>Przedmiot</Label>
-              <div>{item.przedmiot}</div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>Status</Label>
-              <div>{item.status}</div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Korepetytor</Label>
-            <div>{item.korepetytor}</div>
-          </div>
         </div>
-        <DrawerFooter>
-          <DrawerClose asChild>
-            <Button variant="outline">Zamknij</Button>
-          </DrawerClose>
-        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   )

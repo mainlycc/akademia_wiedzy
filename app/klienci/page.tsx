@@ -18,6 +18,19 @@ import {
 import { AssignTutorSelect } from "@/components/assign-tutor"
 
 interface TutorOption { id: string; first_name?: string; last_name?: string }
+interface DBParent { id?: string; first_name?: string; last_name?: string; email?: string; phone?: string }
+interface DBStudent { id?: string; first_name?: string; last_name?: string }
+interface LinkRow { parents?: DBParent | null; students?: DBStudent | null }
+interface SubjectRel { id?: string; name?: string; color?: string }
+interface TutorRel { id?: string; first_name?: string; last_name?: string }
+interface EnrollmentSelect {
+  id: string
+  student_id: string
+  tutor_id: string | null
+  subjects: SubjectRel | SubjectRel[] | null
+  tutors: TutorRel | TutorRel[] | null
+  status: string
+}
 interface ParentRow {
   id: string
   studentId: string
@@ -56,13 +69,13 @@ export default async function ClientsPage() {
     `)
 
   const studentIds = new Set<string>()
-  for (const l of links ?? []) {
-    const s = (l as any).students as { id?: string } | null
+  for (const l of (links as LinkRow[] | null) ?? []) {
+    const s = l.students
     if (s?.id) studentIds.add(s.id)
   }
 
   // 2) Pobierz zapisy (przedmioty + korepetytorzy) dla wszystkich tych uczniów
-  let enrollmentRows: ParentRow[] = []
+  const enrollmentRows: ParentRow[] = []
   let tutorsOptions: TutorOption[] = []
   if (studentIds.size > 0) {
     const { data: enrollments } = await supabase
@@ -70,6 +83,7 @@ export default async function ClientsPage() {
       .select(`
         id,
         student_id,
+        tutor_id,
         status,
         subjects:subject_id (
           id,
@@ -83,16 +97,16 @@ export default async function ClientsPage() {
       `)
       .in("student_id", Array.from(studentIds))
 
-    for (const e of enrollments ?? []) {
-      const sid = (e as any).student_id as string | undefined
+    for (const e of (enrollments as EnrollmentSelect[] | null) ?? []) {
+      const sid = e.student_id
       if (!sid) continue
-      const subjRel = (e as any).subjects as { name?: string } | { name?: string }[] | null
-      const tutorRel = (e as any).tutors as { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[] | null
+      const subjRel = e.subjects
+      const tutorRel = e.tutors
       const subj = Array.isArray(subjRel) ? subjRel[0] : subjRel
       const tut = Array.isArray(tutorRel) ? tutorRel[0] : tutorRel
       enrollmentRows.push({
-        id: (e as any).id as string,
-        enrollmentId: (e as any).id as string,
+        id: e.id,
+        enrollmentId: e.id,
         studentId: sid,
         studentName: "", // uzupełnimy niżej
         parentName: "", // uzupełnimy niżej
@@ -100,7 +114,7 @@ export default async function ClientsPage() {
         phone: undefined,
         paymentStatus: "—",
         subjectName: subj?.name,
-        tutorId: (tut as any)?.id ?? null,
+        tutorId: e.tutor_id,
       })
     }
   }
@@ -111,14 +125,14 @@ export default async function ClientsPage() {
     .select("id, first_name, last_name, active")
     .eq("active", true)
     .order("last_name", { ascending: true })
-  tutorsOptions = (tutors ?? []).map((t) => ({ id: t.id as string, first_name: (t as any).first_name, last_name: (t as any).last_name }))
+  tutorsOptions = (tutors ?? []).map((t) => ({ id: t.id as string, first_name: (t as { first_name?: string }).first_name, last_name: (t as { last_name?: string }).last_name }))
   
 
   // 3) Zbuduj wiersze: jeden wiersz = jedna para (uczeń, rodzic)
-  const rows: ParentRow[] = (links ?? [])
+  const rows: ParentRow[] = ((links as LinkRow[] | null) ?? [])
     .flatMap((l) => {
-      const p = (l as any).parents as { id?: string; first_name?: string; last_name?: string; email?: string; phone?: string } | null
-      const s = (l as any).students as { id?: string; first_name?: string; last_name?: string } | null
+      const p = l.parents
+      const s = l.students
       if (!p || !s) return []
       const studentName = [s.first_name, s.last_name].filter(Boolean).join(" ") || "—"
       const parentName = [p.first_name, p.last_name].filter(Boolean).join(" ") || "—"

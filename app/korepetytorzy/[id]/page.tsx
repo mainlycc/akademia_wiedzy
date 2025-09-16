@@ -3,7 +3,6 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 
@@ -37,9 +36,10 @@ export default async function TutorDetailsPage({ params }: { params: { id: strin
     `)
     .eq("tutor_id", tutorId)
 
-  const studentsRows = (students ?? [])
-    .map((row) => (row as any).students)
-    .filter(Boolean) as { id: string; first_name?: string; last_name?: string }[]
+  interface StudentRow { id: string; first_name?: string; last_name?: string }
+  const studentsRows: StudentRow[] = (students ?? [])
+    .map((row) => (row as { students?: StudentRow | null }).students)
+    .filter(Boolean) as StudentRow[]
 
   const userData = {
     name:
@@ -48,7 +48,7 @@ export default async function TutorDetailsPage({ params }: { params: { id: strin
     avatar: user.user_metadata?.avatar_url || "/avatars/default.jpg",
   }
 
-  const fullName = [ (tutor as any).first_name, (tutor as any).last_name ].filter(Boolean).join(" ") || "Korepetytor"
+  const fullName = [ (tutor as { first_name?: string }).first_name, (tutor as { last_name?: string }).last_name ].filter(Boolean).join(" ") || "Korepetytor"
 
   return (
     <SidebarProvider
@@ -68,8 +68,8 @@ export default async function TutorDetailsPage({ params }: { params: { id: strin
               <h1 className="text-3xl font-bold tracking-tight">{fullName}</h1>
               <p className="text-muted-foreground">Panel korepetytora</p>
             </div>
-            <Badge variant={ (tutor as any).active ? "secondary" : "outline" }>
-              {(tutor as any).active ? "Aktywny" : "Nieaktywny"}
+            <Badge variant={ (tutor as { active?: boolean }).active ? "secondary" : "outline" }>
+              {(tutor as { active?: boolean }).active ? "Aktywny" : "Nieaktywny"}
             </Badge>
           </div>
 

@@ -38,6 +38,18 @@ const getNavData = (pathname: string) => ({
       isActive: pathname.startsWith("/uczniowie"),
     },
     {
+      title: "Klienci",
+      url: "/klienci",
+      icon: IconUsers,
+      isActive: pathname.startsWith("/klienci"),
+    },
+    {
+      title: "Korepetytorzy",
+      url: "/korepetytorzy",
+      icon: IconUsers,
+      isActive: pathname.startsWith("/korepetytorzy"),
+    },
+    {
       title: "Grafik",
       url: "/grafik",
       icon: IconCalendar,

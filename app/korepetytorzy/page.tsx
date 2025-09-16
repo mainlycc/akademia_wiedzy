@@ -31,12 +31,13 @@ export default async function TutorsPage() {
     .select("id, first_name, last_name, email, phone, active")
     .order("last_name", { ascending: true })
 
+  interface TutorRow { id: string; first_name?: string; last_name?: string; email?: string; phone?: string; active?: boolean }
   const rows = (tutors ?? []).map((t) => ({
     id: t.id as string,
-    name: [ (t as any).first_name, (t as any).last_name ].filter(Boolean).join(" ") || "—",
-    email: (t as any).email as string | undefined,
-    phone: (t as any).phone as string | undefined,
-    active: (t as any).active as boolean | undefined,
+    name: [ (t as TutorRow).first_name, (t as TutorRow).last_name ].filter(Boolean).join(" ") || "—",
+    email: (t as TutorRow).email,
+    phone: (t as TutorRow).phone,
+    active: (t as TutorRow).active,
   }))
 
   const userData = {

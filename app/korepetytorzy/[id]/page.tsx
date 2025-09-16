@@ -38,8 +38,11 @@ export default async function TutorDetailsPage({ params }: { params: { id: strin
 
   interface StudentRow { id: string; first_name?: string; last_name?: string }
   const studentsRows: StudentRow[] = (students ?? [])
-    .map((row) => (row as { students?: StudentRow | null }).students)
-    .filter(Boolean) as StudentRow[]
+    .flatMap((row) => {
+      const rel = (row as { students?: StudentRow | StudentRow[] | null }).students
+      if (Array.isArray(rel)) return rel.filter(Boolean) as StudentRow[]
+      return rel ? [rel] : []
+    })
 
   const userData = {
     name:

@@ -24,8 +24,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { pl } from "date-fns/locale"
 import { IconCalendar, IconPlus } from "@tabler/icons-react"
 
 export function AddReservationDialog() {
@@ -210,7 +208,11 @@ export function AddReservationDialog() {
                   >
                     <IconCalendar className="mr-2 h-4 w-4" />
                     {formData.date ? (
-                      format(formData.date, "PPP", { locale: pl })
+                      formData.date.toLocaleDateString('pl-PL', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })
                     ) : (
                       <span>Wybierz datę</span>
                     )}
@@ -223,7 +225,6 @@ export function AddReservationDialog() {
                     onSelect={(date) => handleInputChange("date", date)}
                     disabled={(date) => date < new Date()}
                     initialFocus
-                    locale={pl}
                   />
                 </PopoverContent>
               </Popover>

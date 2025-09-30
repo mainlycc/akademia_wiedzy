@@ -5,8 +5,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { format, isSameDay } from "date-fns"
-import { pl } from "date-fns/locale"
+import { isSameDay } from "date-fns"
 import { IconCalendar, IconClock, IconMapPin, IconUser } from "@tabler/icons-react"
 
 export type Reservation = {
@@ -129,7 +128,6 @@ export function ReservationsCalendar({ data }: ReservationsCalendarProps) {
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               className="rounded-md border"
-              locale={pl}
               components={{
                 Day: ({ date }) => {
                   const dayReservations = getReservationsForDate(date)
@@ -159,7 +157,7 @@ export function ReservationsCalendar({ data }: ReservationsCalendarProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <IconCalendar className="h-5 w-5" />
-              {selectedDate ? format(selectedDate, "d MMMM yyyy", { locale: pl }) : "Wybierz datę"}
+              {selectedDate ? selectedDate.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' }) : "Wybierz datę"}
             </CardTitle>
             <CardDescription>
               {selectedDayReservations.length} rezerwacji
@@ -217,7 +215,7 @@ export function ReservationsCalendar({ data }: ReservationsCalendarProps) {
           <CardHeader>
             <CardTitle>Statystyki miesiąca</CardTitle>
             <CardDescription>
-              {format(currentMonth, "MMMM yyyy", { locale: pl })}
+              {currentMonth.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' })}
             </CardDescription>
           </CardHeader>
           <CardContent>

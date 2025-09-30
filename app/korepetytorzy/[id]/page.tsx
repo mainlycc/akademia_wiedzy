@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { WeeklySchedule } from "@/components/weekly-schedule"
 import { createSupabaseBrowserClient } from "@/lib/supabase/client"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { User, Users, Calendar, FileText } from "lucide-react"
 
 interface StudentRow { 
@@ -33,6 +32,8 @@ interface TutorData {
   created_at?: string
   updated_at?: string
 }
+
+type SupabaseUser = Awaited<ReturnType<ReturnType<typeof createSupabaseBrowserClient>['auth']['getUser']>>['data']['user']
 
 export default function TutorDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -87,7 +88,8 @@ export default function TutorDetailsPage({ params }: { params: { id: string } })
         const studentsRows: StudentRow[] = (studentsData ?? [])
           .flatMap((row) => {
             const student = (row as { students?: StudentRow | StudentRow[] | null }).students
-            const subject = (row as { subjects?: { name: string } | null }).subjects
+            const subjectRel = (row as { subjects?: { name: string } | { name: string }[] | null }).subjects
+            const subject = Array.isArray(subjectRel) ? subjectRel[0] : subjectRel
             if (Array.isArray(student)) {
               return student.filter(Boolean).map(s => ({ ...s, subject: subject?.name }))
             }
@@ -252,7 +254,7 @@ export default function TutorDetailsPage({ params }: { params: { id: string } })
 
             {/* Zakładka: Kalendarz */}
             <TabsContent value="kalendarz" className="space-y-6">
-              <WeeklySchedule tutorId={tutorId} tutorName={fullName} />
+              <WeeklySchedule tutorName={fullName} />
             </TabsContent>
 
             {/* Zakładka: Deklaracje miesiąca */}

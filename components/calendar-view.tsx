@@ -49,15 +49,6 @@ export function CalendarView({ slots, viewMode, currentWeek, onSlotClick }: Cale
     })
   }
 
-  const getSlotsForDay = (day: Date) => {
-    return slots
-      .filter((slot) => {
-        const slotDate = new Date(slot.start)
-        return isSameDay(slotDate, day)
-      })
-      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-  }
-
   if (viewMode === "list") {
     const availableSlots = slots
       .filter((slot) => slot.type === "availability")

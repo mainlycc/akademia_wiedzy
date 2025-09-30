@@ -16,7 +16,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createSupabaseBrowserClient } from "@/lib/supabase/client"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
 import {
   Table,
   TableBody,
@@ -39,6 +38,8 @@ interface TutorRow {
   studentCount?: number
   monthlyHours?: number
 }
+
+type SupabaseUser = Awaited<ReturnType<ReturnType<typeof createSupabaseBrowserClient>['auth']['getUser']>>['data']['user']
 
 export default function TutorsPage() {
   const router = useRouter()
@@ -101,7 +102,13 @@ export default function TutorsPage() {
               `)
               .eq("tutor_id", tutor.id)
 
-            const subjects = enrollments?.map(e => e.subjects?.name).filter(Boolean) || []
+            const subjects = enrollments?.map(e => {
+              const subj = e.subjects as unknown as { name: string } | { name: string }[] | null | undefined
+              if (Array.isArray(subj)) {
+                return subj[0]?.name
+              }
+              return subj?.name
+            }).filter((name): name is string => Boolean(name)) || []
 
             // Pobierz liczbę uczniów
             const { count: studentCount } = await supabase

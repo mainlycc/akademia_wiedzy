@@ -8,7 +8,6 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { Badge } from "@/components/ui/badge"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 
 import data from "./data.json"

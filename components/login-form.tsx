@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createSupabaseBrowserClient } from "@/lib/supabase/client"
+import { Eye, EyeOff } from "lucide-react"
 
 export function LoginForm({
   className,
@@ -23,6 +24,7 @@ export function LoginForm({
   const supabase = createSupabaseBrowserClient()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   async function onSubmit(formData: FormData) {
     setError(null)
@@ -81,7 +83,27 @@ export function LoginForm({
                       Zapomniałeś hasła?
                     </a>
                   </div>
-                  <Input id="password" name="password" type="password" required />
+                  <div className="relative">
+                    <Input 
+                      id="password" 
+                      name="password" 
+                      type={showPassword ? "text" : "password"} 
+                      required 
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <Eye className="h-4 w-4" />
+                      ) : (
+                        <EyeOff className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 {error ? (
                   <div className="text-destructive text-sm">{error}</div>

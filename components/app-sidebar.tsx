@@ -62,6 +62,12 @@ const getNavData = (pathname: string) => ({
       isActive: pathname.startsWith("/rezerwacje"),
     },
     {
+      title: "Kalendarz",
+      url: "/calendar",
+      icon: IconCalendar,
+      isActive: pathname.startsWith("/calendar"),
+    },
+    {
       title: "Płatności",
       url: "/platnosci",
       icon: IconCreditCard,

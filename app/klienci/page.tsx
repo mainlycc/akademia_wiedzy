@@ -101,9 +101,7 @@ export default async function ClientsPage() {
       const sid = e.student_id
       if (!sid) continue
       const subjRel = e.subjects
-      const tutorRel = e.tutors
       const subj = Array.isArray(subjRel) ? subjRel[0] : subjRel
-      const tut = Array.isArray(tutorRel) ? tutorRel[0] : tutorRel
       enrollmentRows.push({
         id: e.id,
         enrollmentId: e.id,

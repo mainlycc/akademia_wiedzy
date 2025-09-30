@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
+import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: CookieOptions) {
           request.cookies.set({
             name,
             value,
@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
             ...options,
           })
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: CookieOptions) {
           request.cookies.set({
             name,
             value: "",
@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Ścieżki publiczne, które nie wymagają autentykacji
-  const publicPaths = ["/login", "/register"]
+  const publicPaths = ["/login", "/register", "/calendar"]
   const isPublicPath = publicPaths.includes(request.nextUrl.pathname)
 
   // Jeśli użytkownik nie jest zalogowany i próbuje uzyskać dostęp do chronionej strony

@@ -6,14 +6,13 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { ReservationsTable } from "@/components/reservations-table"
 import { ReservationsCalendar } from "@/components/reservations-calendar"
 import { AddReservationDialog } from "@/components/add-reservation-dialog"
-import { IconCalendar, IconClock, IconPlus, IconUsers } from "@tabler/icons-react"
+import { IconCalendar, IconClock, IconUsers } from "@tabler/icons-react"
 
 // Przykładowe dane rezerwacji
 const reservationsData = [

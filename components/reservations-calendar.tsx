@@ -4,9 +4,8 @@ import * as React from "react"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns"
+import { format, isSameDay } from "date-fns"
 import { pl } from "date-fns/locale"
 import { IconCalendar, IconClock, IconMapPin, IconUser } from "@tabler/icons-react"
 
@@ -132,7 +131,7 @@ export function ReservationsCalendar({ data }: ReservationsCalendarProps) {
               className="rounded-md border"
               locale={pl}
               components={{
-                Day: ({ date, displayMonth }) => {
+                Day: ({ date }) => {
                   const dayReservations = getReservationsForDate(date)
                   const hasReservations = dayReservations.length > 0
                   
